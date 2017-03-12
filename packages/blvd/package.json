@@ -1,0 +1,17 @@
+{
+  "name": "blvd",
+  "version": "0.0.1",
+  "description": "A framework for building full-stack JS applications.",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blvdgroup/boulevard.git"
+  },
+  "author": "blvd",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/blvdgroup/boulevard/issues"
+  },
+  "homepage": "https://github.com/blvdgroup/boulevard#readme"
+}
