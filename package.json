@@ -12,5 +12,8 @@
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
     }
+  },
+  "dependencies": {
+    "crypto-promise": "^2.0.0"
   }
 }

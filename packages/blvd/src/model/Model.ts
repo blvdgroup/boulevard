@@ -1,5 +1,8 @@
+import { randomBytes } from 'crypto-promise'
+
 import Context from '../context/Context'
 import PropertyType from '../propertyTypes/PropertyType'
+import PropertyTypes from '../propertyTypes/PropertyTypes'
 
 /**
  * The Model class represents a Model in a traffic application. A Model is a
@@ -16,16 +19,32 @@ import PropertyType from '../propertyTypes/PropertyType'
  */
 class Model {
 
-  public static properties: object = {}
-
-  constructor(public context: Context, public properties: object = {}) {
-    if (!this.checkPropertyTypes()) throw new Error('Somethings has gone horribly awry!')
+  public static properties: object = {
+    id: [PropertyTypes.string(), PropertyTypes.unique('id')]
   }
 
-  private async checkPropertyTypes(): Promise<boolean> {
+  constructor(public context: Context, public properties: object = {}) {
+    // First, generate a unique ID for this Item
+    this.generateId()
+      .then((id: string) => {
+        // Then, add the ID to the properties of the item
+        this.properties = { ...this.properties, id }
+      })
+      .then(() => this.checkPropertyTypes(this.constructor.prototype.properties, this.properties))
+      .then(
+        // Then, check the properties of the item match up with the propertyTypes provided
+        () => {
+          console.log('Successfully created new model! Yay!')
+        },
+        () => {
+          console.log('Uh-oh! Something broke when checking the property types!')
+        }
+      )
+  }
+
+  private async checkPropertyTypes(propertyTypes: object, properties: object): Promise<boolean> {
     // Listen, I know you wanna read this function.
     // I do too.
-    const propertyTypes = this.constructor.prototype.properties
     const checkResults: boolean[] = await Promise.all(Object.keys(this.properties).map((property): Promise<boolean> => {
       if (typeof propertyTypes[property] === 'function') {
         return new Promise((resolve: Function, reject: Function) => {
@@ -41,6 +60,11 @@ class Model {
       return new Promise((resolve: Function, reject: Function) => resolve(false))
     }))
     return checkResults.reduce(((prev: boolean, curr: boolean) => (prev === true && curr === true)), true)
+  }
+
+  private async generateId(): Promise<string> {
+    const r = await randomBytes(32)
+    return r.toString('hex')
   }
 }
 

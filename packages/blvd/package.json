@@ -24,5 +24,8 @@
     "tslint": "^4.5.1",
     "tslint-eslint-rules": "^3.4.0",
     "typescript": "^2.2.1"
+  },
+  "dependencies": {
+    "crypto-promise": "^2.0.0"
   }
 }
