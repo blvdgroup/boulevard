@@ -4,7 +4,7 @@
   "description": "A framework for building full-stack JS applications.",
   "main": "build/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "rimraf ./build && tsc",
     "lint": "tslint -c ./tslint.json src/**/*.ts",
     "prepublish": "npm run build"
   },
