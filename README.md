@@ -20,6 +20,7 @@ Boulevard is a framework for building full-stack apps on JavaScript. If it was a
 - [Packages](#packages)
   - [Core](#core)
   - [View Adapters](#view-adapters)
+  - [Database Adapters](#database-adapters)
   - [Other](#other)
 
 
