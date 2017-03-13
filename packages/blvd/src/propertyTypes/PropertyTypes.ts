@@ -1,6 +1,6 @@
-import Context from './Context'
-import Model from './Model'
-import ModelConstructor from './ModelConstructor'
+import Context from '../context/Context'
+import Model from '../model/Model'
+import ModelConstructor from '../model/ModelConstructor'
 import PropertyTypeWrapper from './PropertyTypeWrapper'
 
 /**

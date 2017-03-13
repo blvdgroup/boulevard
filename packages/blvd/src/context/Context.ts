@@ -1,5 +1,5 @@
-import Model from './Model'
-import ModelConstructor from './ModelConstructor'
+import Model from '../model/Model'
+import ModelConstructor from '../model/ModelConstructor'
 
 /**
  * A context is an area where Items are stored. A traffic application has two

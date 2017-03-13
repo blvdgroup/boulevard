@@ -2,9 +2,9 @@ declare var console
 
 import { randomBytes } from 'crypto'
 
-import Context from './Context'
-import Model from './Model'
-import PropertyTypes from './PropertyTypes'
+import Context from './context/Context'
+import Model from './model/Model'
+import PropertyTypes from './propertyTypes/PropertyTypes'
 
 /**
  * By default, we export the model with a unique, indexable id added on. It is a

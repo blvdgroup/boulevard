@@ -1,5 +1,5 @@
-import Context from './Context'
-import PropertyType from './PropertyType'
+import Context from '../context/Context'
+import PropertyType from '../propertyTypes/PropertyType'
 
 /**
  * The Model class represents a Model in a traffic application. A Model is a

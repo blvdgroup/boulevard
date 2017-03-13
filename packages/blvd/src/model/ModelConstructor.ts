@@ -1,4 +1,4 @@
-import Context from './Context'
+import Context from '../context/Context'
 import Model from './Model'
 
 interface ModelConstructor<M extends Model> {
