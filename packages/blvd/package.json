@@ -2,8 +2,11 @@
   "name": "blvd",
   "version": "0.0.1",
   "description": "A framework for building full-stack JS applications.",
-  "main": "index.js",
-  "scripts": {},
+  "main": "build/index.js",
+  "scripts": {
+    "build": "tsc",
+    "lint": "tslint -c ./tslint.json src/**/*.ts"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/blvdgroup/boulevard.git"
@@ -13,5 +16,11 @@
   "bugs": {
     "url": "https://github.com/blvdgroup/boulevard/issues"
   },
-  "homepage": "https://github.com/blvdgroup/boulevard#readme"
+  "homepage": "https://github.com/blvdgroup/boulevard#readme",
+  "devDependencies": {
+    "rimraf": "^2.6.1",
+    "tslint": "^4.5.1",
+    "tslint-eslint-rules": "^3.4.0",
+    "typescript": "^2.2.1"
+  }
 }
