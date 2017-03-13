@@ -1,5 +1,7 @@
 declare var console
 
+import { randomBytes } from 'crypto'
+
 import Context from './Context'
 import Model from './Model'
 import PropertyTypes from './PropertyTypes'
@@ -15,7 +17,11 @@ class BaseModel extends Model {
 
   constructor (context: Context, properties: object = {}) {
     // Generate an ID for this Item
-    const newProperties = { ...properties, id: 'TheoreticallyRandomID' } // TODO
+    const rb = randomBytes(32)
+    const newProperties = {
+      ...properties,
+      id: rb.toString('hex')
+    } // TODO
     super(context, newProperties)
   }
 }
