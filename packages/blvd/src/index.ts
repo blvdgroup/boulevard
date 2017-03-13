@@ -10,7 +10,7 @@ import PropertyTypes from './PropertyTypes'
  */
 class BaseModel extends Model {
   public static properties: object = {
-    id: [PropertyTypes.string(), PropertyTypes.index('id')]
+    id: [PropertyTypes.string(), PropertyTypes.unique('id')]
   }
 
   constructor (context: Context, properties: object = {}) {
