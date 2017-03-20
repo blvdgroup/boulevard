@@ -1,6 +1,3 @@
-import Context from '../context/Context'
-import Model from '../model/Model'
-import ModelConstructor from '../model/ModelConstructor'
 import PropertyTypeWrapper from './PropertyTypeWrapper'
 
 /**
@@ -29,9 +26,6 @@ class PropertyTypes {
   public static string: PropertyTypeWrapper = () => (o: any) => typeof o === 'string'
   public static number: PropertyTypeWrapper = () => (o: any) => typeof o === 'number'
   public static boolean: PropertyTypeWrapper = () => (o: any) => typeof o === 'boolean'
-  public static unique: PropertyTypeWrapper = (i) =>
-    <M extends Model>(o: any, t: Model, m: ModelConstructor<M>, c: Context) =>
-    c.item(m, { [i]: o }).then((result: any) => result === null)
 }
 
 export default PropertyTypes
