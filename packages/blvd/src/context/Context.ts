@@ -1,8 +1,24 @@
+import { EventEmitter } from 'events'
+
 import Model from '../model/Model'
 import ModelConstructor from '../model/ModelConstructor'
 
-interface ItemListener {
-  <M extends Model>(item: M): Promise<boolean>
+enum Status {
+  SUCCESS,
+  FAILURE
+}
+
+interface AddItemResult {
+  status: Status,
+  error?: string
+}
+
+interface ItemFetcher {
+  <M extends Model>(model: ModelConstructor<M>, index: string): Promise<M>
+}
+
+interface ItemStorer {
+  <M extends Model>(item: M, index: string): Promise<AddItemResult>
 }
 
 /**
@@ -14,31 +30,43 @@ interface ItemListener {
  * context you can't by default (for good reason), along with some other stuff
  * I've yet to define.
  */
-class Context {
-  protected addItemListeners: ItemListener[] = []
+class Context extends EventEmitter {
+  public models: Array<ModelConstructor<any>> = []
+  protected itemFetchers: ItemFetcher[] = []
+  protected itemStorers: ItemStorer[] = []
 
-  public async item<M extends Model>(ItemModel: ModelConstructor<M>, index: object): Promise<M> {
+
+  public async item<M extends Model>(ItemModel: ModelConstructor<M>, index: string): Promise<M> {
     // TODO: This is just a dummy method - Should actually attempt to fetch an item.
     return new Promise<M>((resolve: Function, reject: Function) => (new ItemModel(this)))
   }
 
   // TODO: items method, for fetching multiple items
 
-  public async addItem<M extends Model>(ItemModel: ModelConstructor<M>, properties?: object): Promise<boolean> {
-    // When you add an item, simply run all the addItemListeners in tandem and wait for them all to complete.
-    // They should return true in case of a success, and false in case of a failure. We then reduce this array
-    // of booleans to a single true or false result.
-    //
-    // By default, we don't have any addItem listeners in a context, but both the ServerContext and SessionContext
-    // append some addItemListeners to handle addition of an item. A SessionContext will attempt to store the item
-    // in JS, and a ServerContext will attempt to store the item based on what Persistors it has been assigned.
-    //
-    // Defining your own contexts (which can be useful in a variety of situations) allows you to more granularly
-    // define exactly what should happen when an item is added to the context.
-    //
-    // TODO: Handle errors better than reducing everything to a boolean, lol
-    return await Promise.all(this.addItemListeners.map((l: ItemListener) => l(new ItemModel(this, properties))))
-      .then((results: boolean[]) => results.reduce(((prev: boolean, curr: boolean) => (prev === true && curr === true)), true))
+  public async addItem<M extends Model>(item: M): Promise<AddItemResult> {
+    this.emit('addItem', item) // For outside programs who want to see when an item is added, we implement EventEmitter
+
+    // Run each item storer in tandem, and when they all complete combine the results into a single success result
+    // Note that even if an item storer fails to store an item, it should just complete the promise w/a FAILURE result
+    return await Promise.all(this.itemStorers.map((store: ItemStorer) => store(item, item.getIndex())))
+      .then((results: AddItemResult[]) => results.reduce(
+        (a: AddItemResult, b: AddItemResult) => a.status === Status.SUCCESS && b.status === Status.SUCCESS
+          ? ({ status: Status.SUCCESS })
+          : ({ status: Status.FAILURE, error: a.error || b.error }),
+        { status: Status.SUCCESS }
+      ))
+  }
+
+  public addModel<M extends Model>(Model: ModelConstructor<M>): void {
+    this.emit('addModel', Model)
+  }
+
+  protected addItemFetcher(fetcher: ItemFetcher): void {
+    this.itemFetchers.push(fetcher)
+  }
+
+  protected addItemStorer(storer: ItemStorer): void {
+    this.itemStorers.push(storer)
   }
 }
 
