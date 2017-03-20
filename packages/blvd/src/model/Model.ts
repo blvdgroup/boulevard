@@ -24,7 +24,7 @@ interface ObjectThatMightHaveId {
 class Model {
 
   public static properties: object = {
-    id: [PropertyTypes.string(), PropertyTypes.unique('id')]
+    id: [PropertyTypes.string()]
   }
 
   constructor(public context: Context, public properties: ObjectThatMightHaveId = {}) {
@@ -44,6 +44,14 @@ class Model {
           console.log('Uh-oh! Something broke when checking the property types!')
         }
       )
+  }
+
+  public getIndex(): string {
+    if (typeof this.properties.id === 'string') {
+      return this.properties.id
+    } else {
+      throw new Error('Attempted to fetch index of object before index was declared.')
+    }
   }
 
   private async checkPropertyTypes(propertyTypes: object, properties: object): Promise<boolean> {
