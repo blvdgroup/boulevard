@@ -1,5 +1,4 @@
-import Context from './Context'
-import Model from '../model/Model'
+import { Context, Model } from 'blvd'
 
 interface Persistor {
   persist: <M extends Model>(item: M) => Promise<boolean>
@@ -19,7 +18,7 @@ class ServerContext extends Context {
 
   constructor () {
     super()
-    this.addItemListeners.push(<M extends Model>(item: M) => this.persist(item))
+    this.addItemStorer(<M extends Model>(item: M) => this.persist(item))
   }
 
   public addPersistor(persistor: Persistor): void {
