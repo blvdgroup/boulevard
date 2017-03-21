@@ -5,7 +5,7 @@
   "main": "build/index.js",
   "scripts": {
     "build": "rimraf ./build && tsc",
-    "lint": "tslint -c ./tslint.json src/**/*.ts",
+    "lint": "tslint --force -c ./tslint.json src/**/*.ts",
     "prepublish": "npm run build"
   },
   "repository": {
@@ -18,13 +18,11 @@
     "url": "https://github.com/blvdgroup/boulevard/issues"
   },
   "dependencies": {
-    "blvd": "^0.0.1-alpha.c18fdf8d"
+    "blvd": "canary"
   },
   "devDependencies": {
-    "@types/node": "^7.0.8",
     "rimraf": "^2.6.1",
     "tslint": "^4.5.1",
-    "tslint-eslint-rules": "^3.4.0",
     "typescript": "^2.2.1"
   },
   "homepage": "https://github.com/blvdgroup/boulevard#readme"
