@@ -25,7 +25,6 @@ class Context extends EventEmitter {
   protected itemFetchers: ItemFetcher[] = []
   protected itemStorers: ItemStorer[] = []
 
-
   public async item<M extends Model>(ItemModel: ModelConstructor<M>, index: string): Promise<M> {
     // TODO: This is just a dummy method - Should actually attempt to fetch an item.
     return new Promise<M>((resolve: Function, reject: Function) => (new ItemModel(this)))
