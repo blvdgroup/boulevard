@@ -1,4 +1,4 @@
-import PropertyTypeWrapper from './PropertyTypeWrapper'
+import PropertyType from './PropertyType'
 
 /**
  * The PropertyTypes class allows you to check your properties against a variety
@@ -23,9 +23,9 @@ import PropertyTypeWrapper from './PropertyTypeWrapper'
  * true or false. Anything other than true or false is considered an error.
  */
 class PropertyTypes {
-  public static string: PropertyTypeWrapper = () => (o: any) => typeof o === 'string'
-  public static number: PropertyTypeWrapper = () => (o: any) => typeof o === 'number'
-  public static boolean: PropertyTypeWrapper = () => (o: any) => typeof o === 'boolean'
+  public static string: PropertyType = (o: any) => typeof o === 'string'
+  public static number: PropertyType = (o: any) => typeof o === 'number'
+  public static boolean: PropertyType = (o: any) => typeof o === 'boolean'
 }
 
 export default PropertyTypes

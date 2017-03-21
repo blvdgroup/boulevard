@@ -25,7 +25,7 @@ interface ObjectThatMightHaveId {
 class Model {
 
   public static properties: object = {
-    id: [PropertyTypes.string()]
+    id: [PropertyTypes.string]
   }
 
   constructor(public context: Context, public properties: ObjectThatMightHaveId = {}) {
