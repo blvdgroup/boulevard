@@ -1,24 +1,14 @@
 import { EventEmitter } from 'events'
 
+import { Status, Result, reduceResults } from '../utils'
 import Model from '../model/Model'
 import ModelConstructor from '../model/ModelConstructor'
-
-enum Status {
-  SUCCESS,
-  FAILURE
-}
-
-interface AddItemResult {
-  status: Status,
-  error?: string
-}
-
 interface ItemFetcher {
   <M extends Model>(model: ModelConstructor<M>, index: string): Promise<M>
 }
 
 interface ItemStorer {
-  <M extends Model>(item: M, index: string): Promise<AddItemResult>
+  <M extends Model>(item: M, index: string): Promise<Result>
 }
 
 /**
@@ -43,22 +33,18 @@ class Context extends EventEmitter {
 
   // TODO: items method, for fetching multiple items
 
-  public async addItem<M extends Model>(item: M): Promise<AddItemResult> {
+  public async addItem<M extends Model>(item: M): Promise<Result> {
     this.emit('addItem', item) // For outside programs who want to see when an item is added, we implement EventEmitter
 
     // Run each item storer in tandem, and when they all complete combine the results into a single success result
     // Note that even if an item storer fails to store an item, it should just complete the promise w/a FAILURE result
     return await Promise.all(this.itemStorers.map((store: ItemStorer) => store(item, item.getIndex())))
-      .then((results: AddItemResult[]) => results.reduce(
-        (a: AddItemResult, b: AddItemResult) => a.status === Status.SUCCESS && b.status === Status.SUCCESS
-          ? ({ status: Status.SUCCESS })
-          : ({ status: Status.FAILURE, error: a.error || b.error }),
-        { status: Status.SUCCESS }
-      ))
+      .then((results: Result[]) => results.reduce(reduceResults, { status: Status.SUCCESS }))
   }
 
-  public addModel<M extends Model>(Model: ModelConstructor<M>): void {
-    this.emit('addModel', Model)
+  public addModel<M extends Model>(MToAdd: ModelConstructor<M>): void {
+    this.emit('addModel', MToAdd)
+    this.models.push(MToAdd)
   }
 
   protected addItemFetcher(fetcher: ItemFetcher): void {

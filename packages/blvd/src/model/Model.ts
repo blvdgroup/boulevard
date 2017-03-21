@@ -1,5 +1,6 @@
 import { randomBytes } from 'crypto-promise'
 
+import { Status, Result, reduceResults } from '../utils'
 import Context from '../context/Context'
 import PropertyType from '../propertyTypes/PropertyType'
 import PropertyTypes from '../propertyTypes/PropertyTypes'
@@ -54,10 +55,8 @@ class Model {
     }
   }
 
-  private async checkPropertyTypes(propertyTypes: object, properties: object): Promise<boolean> {
-    // Listen, I know you wanna read this function.
-    // I do too.
-    const checkResults: boolean[] = await Promise.all(Object.keys(this.properties).map((property: string): Promise<boolean> => {
+  private async checkPropertyTypes(propertyTypes: object, properties: object): Promise<Result> {
+    const checkResults: Result[] = await Promise.all(Object.keys(this.properties).map((property: string): Promise<Result> => {
       if (typeof propertyTypes[property] === 'function') {
         return new Promise((resolve: Function, reject: Function) => {
           const check: PropertyType = propertyTypes[property]
@@ -65,13 +64,16 @@ class Model {
         })
       } else if (Array.isArray(propertyTypes[property])) {
         const checks: PropertyType[] = propertyTypes[property]
-        return Promise.all(checks.map((check: Function): Promise<boolean> =>
+        return Promise.all(checks.map((check: Function): Promise<Result> =>
           Promise.resolve(check(this.properties[property], this, this.constructor.prototype, this.context))
-        )).then((results: boolean[]) => results.reduce(((prev: boolean, curr: boolean) => (prev === true && curr === true)), true))
+        )).then((results: Result[]) => results.reduce(reduceResults, { status: Status.SUCCESS }))
       }
-      return Promise.resolve(false)
+      return Promise.resolve({
+        status: Status.FAILURE,
+        error: 'One of the provided property types was not a function or array of functions.'
+      })
     }))
-    return checkResults.reduce(((prev: boolean, curr: boolean) => (prev === true && curr === true)), true)
+    return checkResults.reduce(reduceResults, { status: Status.SUCCESS })
   }
 
   private async generateId(): Promise<string> {
