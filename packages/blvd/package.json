@@ -3,9 +3,10 @@
   "version": "0.0.1",
   "description": "A framework for building full-stack JS applications.",
   "main": "build/index.js",
+  "types": "./index.d.ts",
   "scripts": {
     "build": "rimraf ./build && tsc",
-    "lint": "tslint -c ./tslint.json src/**/*.ts",
+    "lint": "tslint --force -c ./tslint.json src/**/*.ts",
     "prepublish": "npm run build"
   },
   "repository": {
@@ -19,10 +20,8 @@
   },
   "homepage": "https://github.com/blvdgroup/boulevard#readme",
   "devDependencies": {
-    "@types/node": "^7.0.8",
     "rimraf": "^2.6.1",
     "tslint": "^4.5.1",
-    "tslint-eslint-rules": "^3.4.0",
     "typescript": "^2.2.1"
   },
   "dependencies": {
