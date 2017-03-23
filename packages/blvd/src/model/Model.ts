@@ -24,7 +24,7 @@ interface ObjectThatMightHaveId {
  */
 class Model {
 
-  public static properties: object = {
+  public static propertyTypes: object = {
     id: [PropertyTypes.string]
   }
 
@@ -35,7 +35,7 @@ class Model {
         // Then, add the ID to the properties of the item if it doesn't have an ID
         this.properties = { ...this.properties, id }
       })
-      .then(() => this.checkPropertyTypes(this.constructor.prototype.properties, this.properties))
+      .then(() => this.checkPropertyTypes(this.constructor.prototype.propertyTypes, this.properties))
       .then(
         // Then, check the properties of the item match up with the propertyTypes provided
         () => {
