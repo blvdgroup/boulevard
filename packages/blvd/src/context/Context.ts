@@ -1,15 +1,11 @@
 import { EventEmitter } from 'events'
 
+import ItemFetcher from './ItemFetcher'
+import ItemStorer from './ItemStorer'
+
 import { Status, Result, reduceResults } from '../utils'
 import Model from '../model/Model'
 import ModelConstructor from '../model/ModelConstructor'
-interface ItemFetcher {
-  <M extends Model>(model: ModelConstructor<M>, index: string): Promise<M>
-}
-
-interface ItemStorer {
-  <M extends Model>(item: M, index: string): Promise<Result>
-}
 
 /**
  * A context is an area where Items are stored. A traffic application has two

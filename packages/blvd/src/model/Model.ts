@@ -5,7 +5,7 @@ import Context from '../context/Context'
 import PropertyType from '../propertyTypes/PropertyType'
 import PropertyTypes from '../propertyTypes/PropertyTypes'
 
-interface ObjectThatMightHaveId {
+export interface ObjectThatMightHaveId {
   id?: string
 }
 
