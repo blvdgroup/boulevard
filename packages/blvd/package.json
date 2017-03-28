@@ -2,8 +2,8 @@
   "name": "blvd",
   "version": "0.0.1",
   "description": "A framework for building full-stack JS applications.",
-  "main": "build/index.js",
-  "types": "./index.d.ts",
+  "main": "./build/index.js",
+  "types": "./build/index.d.ts",
   "scripts": {
     "build": "rimraf ./build && tsc",
     "lint": "tslint --force -c ./tslint.json src/**/*.ts",
