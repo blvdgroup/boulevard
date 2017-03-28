@@ -18,7 +18,8 @@
     "url": "https://github.com/blvdgroup/boulevard/issues"
   },
   "dependencies": {
-    "blvd": "canary"
+    "blvd": "canary",
+    "blvd-utils": "canary"
   },
   "devDependencies": {
     "rimraf": "^2.6.1",
