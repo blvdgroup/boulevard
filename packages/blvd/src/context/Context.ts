@@ -3,7 +3,7 @@ import { EventEmitter } from 'events'
 import ItemFetcher from './ItemFetcher'
 import ItemStorer from './ItemStorer'
 
-import { Status, Result, reduceResults } from '../utils'
+import { Status, Result, reduceResults } from 'blvd-utils'
 import Model from '../model/Model'
 import ModelConstructor from '../model/ModelConstructor'
 

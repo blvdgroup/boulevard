@@ -1,4 +1,4 @@
-import { Result } from '../utils'
+import { Result } from 'blvd-utils'
 import Model from '../model/Model'
 
 interface ItemStorer {
