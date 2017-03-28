@@ -18,17 +18,19 @@ class ServerContext extends Context {
 
   constructor () {
     super()
-    this.addItemStorer(<M extends Model>(item: M) => this.persist(item))
+    // this.addItemStorer(<M extends Model>(item: M, index: string) => this.persist(item, index))
   }
 
   public addPersistor(persistor: Persistor): void {
     this.persistors.push(persistor)
   }
 
-  private async persist<M extends Model>(item: M): Promise<boolean> {
+  /*
+  private async persist<M extends Model>(item: M): Promise<Result> {
     return (await Promise.all(this.persistors.map((p: Persistor) => p.persist(item))))
       .reduce(((prev: boolean, curr: boolean) => (prev === true && curr === true)), true)
   }
+  */
 
   // TODO: fetch function
   // TODO: handle errors better than reducing to boolean
