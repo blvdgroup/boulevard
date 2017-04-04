@@ -1,0 +1,30 @@
+{
+  "name": "blvd-client",
+  "version": "0.0.1",
+  "description": "",
+  "main": "build/index.js",
+  "types": "./build/index.d.ts",
+  "scripts": {
+    "build": "rimraf ./build && tsc",
+    "lint": "tslint --force -c ./tslint.json src/**/*.ts",
+    "prepublish": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blvdgroup/boulevard.git"
+  },
+  "author": "blvd",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/blvdgroup/boulevard/issues"
+  },
+  "devDependencies": {
+    "rimraf": "^2.6.1",
+    "tslint": "^4.5.1",
+    "typescript": "^2.2.1"
+  },
+  "dependencies": {
+    "blvd-utils": "canary"
+  },
+  "homepage": "https://github.com/blvdgroup/boulevard#readme"
+}
