@@ -1,9 +1,7 @@
 import { Context, Model } from 'blvd'
 import { Result, Status, reduceResults } from 'blvd-utils'
 
-interface Persistor {
-  persist: <M extends Model>(item: M, index: string) => Promise<Result>
-}
+import Persistor from './Persistor'
 
 /**
  * A ServerContext is a context meant to be run on a server, which implements the
@@ -34,3 +32,5 @@ class ServerContext extends Context {
   // TODO: fetch function
   // TODO: handle errors better than reducing to boolean
 }
+
+export default ServerContext

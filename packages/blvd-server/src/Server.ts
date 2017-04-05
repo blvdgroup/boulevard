@@ -2,10 +2,6 @@ import micro from 'micro' // TODO: Consider Node 4 support? Micro only supports 
 import { IncomingMessage, ServerResponse } from 'http'
 import { Client } from 'blvd-client'
 
-interface Renderer {
-  (bundle: string, request: IncomingMessage, response: ServerResponse, pathname: string, query: object): string
-}
-
 class Server {
   // The compilePath stores where the last compiled version of the client is stored.
   protected compilePath: string
