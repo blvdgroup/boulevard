@@ -97,8 +97,9 @@ Database adapters allow you to store models in a database, which is probably a g
 
 ### Other
 
-| Package    | Version                                                                                 |
-|------------|-----------------------------------------------------------------------------------------|
-| `blvd-cli` | [![npm](https://img.shields.io/npm/v/blvd-cli.svg)](https://npmjs.org/package/blvd-cli) |
+| Package      | Version                                                                                     |
+|--------------|---------------------------------------------------------------------------------------------|
+| `blvd-cli`   | [![npm](https://img.shields.io/npm/v/blvd-cli.svg)](https://npmjs.org/package/blvd-cli)     |
+| `blvd-utils` | [![npm](https://img.shields.io/npm/v/blvd-utils.svg)](https://npmjs.org/package/blvd-utils) |
 
 These other packages generally handle management of a blvd project.
