@@ -47,7 +47,7 @@ class Server {
   // The handleWsRequest handles websocket requests, much like the handleHttpRequest handles
   // http requests. However, it's generally not a good idea to override this. I can't think of
   // a possible use case for it yet, but hey, you're the programmer here, not me.
-  protected async handleWsRequest (connection: WebSocket): Promise<void> {
+  protected handleWsRequest (connection: WebSocket): void {
     // NOT YET IMPLEMENTED
   }
 
