@@ -1,7 +1,7 @@
 import micro from 'micro' // TODO: Consider Node 4 support? Micro only supports 6+ but Express sucks
 import { IncomingMessage, ServerResponse } from 'http'
 import { Client } from 'blvd-client'
-import { Server as WSServer } from 'ws'
+import WebSocket, { Server as WSServer } from 'ws'
 import { Server as HTTPServer } from 'http'
 
 interface ServerOptions {
@@ -47,7 +47,7 @@ class Server {
   // The handleWsRequest handles websocket requests, much like the handleHttpRequest handles
   // http requests. However, it's generally not a good idea to override this. I can't think of
   // a possible use case for it yet, but hey, you're the programmer here, not me.
-  protected async handleWsRequest (): Promise<void> {
+  protected async handleWsRequest (connection: WebSocket): Promise<void> {
     // NOT YET IMPLEMENTED
   }
 
