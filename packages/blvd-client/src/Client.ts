@@ -31,7 +31,7 @@ class Client {
     // For, say, a webpack compile step, the promise would resolve to whatever the bundle was saved to - maybe
     // index.bundle.js of the same folder. Care should be taken that the Compiler function returns a FULL PATH -
     // none of this PANSY RELATIVE PATH SHIT - we are MEN and we can use the 'path' packagel ike MEN.
-    this.compileSteps.forEach((step: Compiler) => { promise.then(step) })
+    this.compileSteps.forEach((step: Compiler) => { buildPromise.then(step) })
 
     // We wait for these to finish up, and get the path of the final build.
     return await buildPromise
