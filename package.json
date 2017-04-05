@@ -14,6 +14,7 @@
     }
   },
   "dependencies": {
-    "crypto-promise": "^2.0.0"
+    "crypto-promise": "^2.0.0",
+    "ncp": "^2.0.0"
   }
 }

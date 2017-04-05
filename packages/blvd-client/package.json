@@ -24,7 +24,8 @@
     "typescript": "^2.2.1"
   },
   "dependencies": {
-    "blvd-utils": "canary"
+    "blvd-utils": "canary",
+    "ncp": "^2.0.0"
   },
   "homepage": "https://github.com/blvdgroup/boulevard#readme"
 }

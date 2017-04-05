@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "outDir": "build",
+    "strictNullChecks": true,
+    "moduleResolution": "Node",
+    "lib": ["es2015"],
+    "declaration": true
+  },
+  "include": [
+    "src/**/*.ts"
+  ]
+}
