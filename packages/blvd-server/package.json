@@ -23,7 +23,8 @@
     "blvd-client": "canary",
     "blvd-utils": "canary",
     "chokidar": "^1.6.1",
-    "micro": "^7.3.0"
+    "micro": "^7.3.0",
+    "ws": "^2.2.3"
   },
   "devDependencies": {
     "rimraf": "^2.6.1",
