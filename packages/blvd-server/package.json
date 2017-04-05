@@ -20,6 +20,7 @@
   "dependencies": {
     "async-file": "^2.0.2",
     "blvd": "canary",
+    "blvd-client": "canary",
     "blvd-utils": "canary",
     "chokidar": "^1.6.1",
     "micro": "^7.3.0"
