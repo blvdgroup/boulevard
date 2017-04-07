@@ -1,53 +1,81 @@
-import { EventEmitter } from 'events'
+import { Result, Status, reduceResults } from 'blvd-utils'
 
-import ItemFetcher from './ItemFetcher'
-import ItemStorer from './ItemStorer'
-
-import { Status, Result, reduceResults } from 'blvd-utils'
 import Model from '../model/Model'
-import ModelConstructor from '../model/ModelConstructor'
+import ItemCheck from './ItemCheck'
+import ItemHandler from './ItemHandler'
 
-/**
- * A context is an area where Items are stored. A traffic application has two
- * contexts - you can either be referring to the session context, which is
- * shared between server and client but only per session, or the global context,
- * which is shared between all sessions connected to a server. Each context
- * allows you to fetch and store items in the context, although in the global
- * context you can't by default (for good reason), along with some other stuff
- * I've yet to define.
- */
-class Context extends EventEmitter {
-  public models: Array<ModelConstructor<any>> = []
-  protected itemFetchers: ItemFetcher[] = []
-  protected itemStorers: ItemStorer[] = []
+// The important thing to note about a context is it controls the communication between
+// a number of clients and the server. This makes it different from a model, which just
+// stores information - a context controls the distribution of information across multiple
+// devices.
+//
+// There are two different types of context you'll be dealing with, and both extend this base
+// class. PersistentContexts exist between sessions, and are used primarily to store info
+// about models long-term. SessionContexts exist between a client and a server, and are used
+// to echo information between the two. These both exist in the blvd-server package.
+//
+// Previously items existed "within" a single context, but I've come to realize this is not
+// the main feature of a context. An item exists within a server, identified by a unique id -
+// however, it can be added to a context to trigger whatever the context deems fit. If you have
+// an item, for example, and you need to store it in the redis database, you add it to the
+// RedisContext to have it stored. If you have a new item on the server and you want to send it
+// to all of the other connected clients, you put it in some sort of GlobalContext.
+//
+// A context can also "conjure" and "disappear" items. If an item "disappears," it is removed
+// from memory and cannot be immediately accessed. The bouelvard server, for all intents and
+// purposes, does not know the item exists. However, the server can then ask a Context to "conjure"
+// an item, if it suspects a model with a given id exists but does not know the properties of
+// the item. This is largely seen at work in PersistentContexts, which "disappear" items not
+// currently in use to a database but are then able to "conjure" them when asked.
+//
+// The server may also make queries over all items (including disappeared ones) to a context, such
+// as "all items with [x] property greater than [y]," and the context should be able to transform
+// this into a database query. Again, mostly seen in PersistentContexts dealing with databases.
+//
+// Another thing a Context can do is allow certain roles to add or remove Items from the Context.
+// For example, we don't want a client to be able to add just whatever they want to the server,
+// so we place them in two contexts - one where only the server can add and the client can read,
+// and one that both the server and client can add to but only allows certain models to be added.
+abstract class Context {
+  public items: Model[] = []
 
-  public async item<M extends Model>(ItemModel: ModelConstructor<M>, index: string): Promise<M> {
-    // TODO: This is just a dummy method - Should actually attempt to fetch an item.
-    return new Promise<M>((resolve: Function, reject: Function) => (new ItemModel(this)))
+  private itemChecks: ItemCheck[] = [
+    // We have one item check built in which ensures no duplicate items are passed to the context.
+    (i: Model) => Promise.resolve(
+      this.items.filter((t: Model) => t.getIndex() !== i.getIndex()).length === 0
+        ? { status: Status.SUCCESS }
+        : { status: Status.FAILURE, error: 'Duplicate item passed to context.' }
+    )
+  ]
+
+  private itemHandlers: ItemHandler[] = []
+
+
+  public async addItem(item: Model): Promise<Result> {
+    // First, we run each of the item checks we've assigned to this context to make sure we can add this item.
+    // They're all async, so we create an array of promises and await an array of Results.
+    const checkResultA = await Promise.all(this.itemChecks.map((check: ItemCheck) => check(item)))
+
+    // Then, we reduce it to a single result.
+    const checkResult = checkResultA.reduce(reduceResults, { status: Status.SUCCESS })
+
+    // If we failed, return the failure result.
+    if (checkResult.status !== Status.SUCCESS) return checkResult
+
+    // Otherwise, let's let the item handlers handle it, but not care about their result.
+    this.itemHandlers.forEach((handler: ItemHandler) => { handler(item) })
+
+    // Add the item to our locally stored list of items and return a success result.
+    this.items.push(item)
+    return { status: Status.SUCCESS }
   }
 
-  // TODO: items method, for fetching multiple items
-
-  public async addItem<M extends Model>(item: M): Promise<Result> {
-    this.emit('addItem', item) // For outside programs who want to see when an item is added, we implement EventEmitter
-
-    // Run each item storer in tandem, and when they all complete combine the results into a single success result
-    // Note that even if an item storer fails to store an item, it should just complete the promise w/a FAILURE result
-    return await Promise.all(this.itemStorers.map((store: ItemStorer) => store(item, item.getIndex())))
-      .then((results: Result[]) => results.reduce(reduceResults, { status: Status.SUCCESS }))
+  protected addItemCheck(i: ItemCheck): void {
+    this.itemChecks.push(i)
   }
 
-  public addModel<M extends Model>(MToAdd: ModelConstructor<M>): void {
-    this.emit('addModel', MToAdd)
-    this.models.push(MToAdd)
-  }
-
-  protected addItemFetcher(fetcher: ItemFetcher): void {
-    this.itemFetchers.push(fetcher)
-  }
-
-  protected addItemStorer(storer: ItemStorer): void {
-    this.itemStorers.push(storer)
+  protected addItemHandler(i: ItemHandler): void {
+    this.itemHandlers.push(i)
   }
 }
 

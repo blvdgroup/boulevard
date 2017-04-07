@@ -1,7 +1,6 @@
 import { randomBytes } from 'crypto-promise'
 
 import { Status, Result, reduceResults } from 'blvd-utils'
-import Context from '../context/Context'
 import PropertyType from '../propertyTypes/PropertyType'
 import PropertyTypes from '../propertyTypes/PropertyTypes'
 
@@ -9,26 +8,20 @@ export interface ObjectThatMightHaveId {
   id?: string
 }
 
-/**
- * The Model class represents a Model in a traffic application. A Model is a
- * class upon which Items are based - essentially, a traffic app has a bunch of
- * Items, which are each based off of Models.
- *
- * A traffic app might have three Ingredients and one Drink. Each individual
- * Ingredient and Drink is an Item, and the concepts of Ingredients and Drinks
- * are defined as Models.
- *
- * The Item class represents an item stored in a context. This item should abide
- * by a Model, and be an instance thereof of a Model or a class based off the
- * Model.
- */
-class Model {
+// The Model represents a type of Item which may exist in a boulevard server. It specifies
+// what properties the item might have, what each Item matching this Model does upon creation,
+// and other stuff like that.
+//
+// Every Item, regardless of which Model it is based off, has a unique id which identifies it
+// to the server. This is generated in this base class. Please don't override it, because that
+// would be bad.
+abstract class Model {
 
   public static propertyTypes: object = {
     id: [PropertyTypes.string]
   }
 
-  constructor(public context: Context, public properties: ObjectThatMightHaveId = {}) {
+  constructor(public properties: ObjectThatMightHaveId = {}) {
     // First, generate a unique ID for this Item
     (!properties.id ? this.generateId() : Promise.resolve(properties.id))
       .then((id: string) => {
@@ -60,12 +53,12 @@ class Model {
       if (typeof propertyTypes[property] === 'function') {
         return new Promise((resolve: Function, reject: Function) => {
           const check: PropertyType = propertyTypes[property]
-          resolve(check(this.properties[property], this, this.constructor.prototype, this.context))
+          resolve(check(this.properties[property], this, this.constructor.prototype))
         })
       } else if (Array.isArray(propertyTypes[property])) {
         const checks: PropertyType[] = propertyTypes[property]
         return Promise.all(checks.map((check: Function): Promise<Result> =>
-          Promise.resolve(check(this.properties[property], this, this.constructor.prototype, this.context))
+          Promise.resolve(check(this.properties[property], this, this.constructor.prototype))
         )).then((results: Result[]) => results.reduce(reduceResults, { status: Status.SUCCESS }))
       }
       return Promise.resolve({
