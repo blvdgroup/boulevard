@@ -21,6 +21,9 @@ abstract class Model {
     id: [PropertyTypes.string]
   }
 
+  // TODO: Implement public static async getByIndex(index: string, value: any)
+  // TODO: Implement public static async getById(id: string)
+
   constructor(public properties: ObjectThatMightHaveId = {}) {
     // First, generate a unique ID for this Item
     (!properties.id ? this.generateId() : Promise.resolve(properties.id))
@@ -47,6 +50,9 @@ abstract class Model {
       throw new Error('Attempted to fetch index of object before index was declared.')
     }
   }
+
+  // TODO: Implement protected async toss(func: () => void): Promise<Result>
+  // TODO: Implement protected async useSecretProperty(property: string, func: (propertyValue: any) => any): Promise<Result>
 
   private async checkPropertyTypes(propertyTypes: object, properties: object): Promise<Result> {
     const checkResults: Result[] = await Promise.all(Object.keys(this.properties).map((property: string): Promise<Result> => {
