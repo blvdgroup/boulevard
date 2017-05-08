@@ -7,7 +7,8 @@
   "scripts": {
     "build": "rimraf ./build && tsc",
     "lint": "tslint --force -c ./tslint.json src/**/*.ts",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build",
+    "watch": "rimraf ./build && tsc --watch"
   },
   "repository": {
     "type": "git",
