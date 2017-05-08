@@ -52,7 +52,14 @@ abstract class Model {
   }
 
   // TODO: Implement protected async toss(func: () => void): Promise<Result>
+  // Also consider implementing as decorator?
+
   // TODO: Implement protected async useSecretProperty(property: string, func: (propertyValue: any) => any): Promise<Result>
+
+  // TODO: Implement protected requireRole(role: Role): (target: any, key: string, descriptor: PropertyDescriptor): void
+  // This will just be a wrapper around the requireRole provided by the main blvd package, making it slightly easier by allowing you to
+  // just pass the original role object for clearer syntax, e.g.,
+  // @this.requireRole('GOOD_BOY') === @requireRole(this.roles.GOOD_BOY) === @requireRole(DogModel.getById(this.id).roles.GOOD_BOY)
 
   private async checkPropertyTypes(propertyTypes: object, properties: object): Promise<Result> {
     const checkResults: Result[] = await Promise.all(Object.keys(this.properties).map((property: string): Promise<Result> => {
