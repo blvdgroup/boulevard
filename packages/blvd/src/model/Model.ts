@@ -1,8 +1,11 @@
 import { randomBytes } from 'crypto-promise'
 
 import { Status, Result, reduceResults } from 'blvd-utils'
+
 import PropertyType from '../propertyTypes/PropertyType'
 import PropertyTypes from '../propertyTypes/PropertyTypes'
+import { Role, UnlinkedRole, requireRole as rr } from '../roles'
+import ModelConstructor from './ModelConstructor'
 
 export interface ObjectThatMightHaveId {
   id?: string
@@ -21,26 +24,53 @@ abstract class Model {
     id: [PropertyTypes.string]
   }
 
-  // TODO: Implement public static async getById(id: string)
-  // This should be implemented first, before we start to implement indexes. I also need to outline how DB adapters are gonna work.
+  public static roles: Role[] = []
+
+  private construction: Promise<Result>
+
+  public static async getById<M extends Model>(id: string): Promise<M> {
+    return (this.makeInternal(id) as Promise<M>)
+  }
+
+  public static async make<M extends Model>(): Promise<M> {
+    return (this.makeInternal() as Promise<M>)
+  }
+
+  private static async makeInternal<M extends Model>(id?: string): Promise<M> {
+    const model: M = new (this.prototype.constructor as ModelConstructor<M>)(id ? { id } : {}) // now this is thinking with portals
+    const result = await model.constructionComplete()
+    switch (result.status) {
+      case Status.SUCCESS: return model
+      case Status.FAILURE: throw new Error(result.error)
+      default: throw new Error('I have no idea how this error would get thrown. There has been a terrible, awful mistake.')
+    }
+  }
 
   // TODO: Implement public static async getByIndex(index: string, value: any)
 
   constructor(public properties: ObjectThatMightHaveId = {}) {
-    // First, generate a unique ID for this Item
-    (!properties.id ? this.generateId() : Promise.resolve(properties.id))
+    // A quick note:
+    // This should NOT be called directly (i.e. should NOT be called using new Model(), or even new ClassExtendingModel()). This is because
+    // models are built ASYNCHRONOUSLY! If you call new Model(), the next line of code cannot know if the model is finished building and
+    // populating. To get around this, we use the static methods `make` and `getById`, which will return promises that return a completed,
+    // populated model.
+
+    // TODO: This construction promise will also have a step where it contacts the server to ask for the properties of this item (if the id
+    // exists.) This will probably take up the majority of the "construction" time. Again, this is why we use `make` or `getById`.
+    this.construction = (!properties.id ? this.generateId() : Promise.resolve(properties.id))
       .then((id: string) => {
         // Then, add the ID to the properties of the item if it doesn't have an ID
         this.properties = { ...this.properties, id }
       })
-      .then(() => this.checkPropertyTypes(this.constructor.prototype.propertyTypes, this.properties))
+      .then(() => this.checkPropertyTypes(this.gpom('propertyTypes'), this.properties))
   }
 
-  // TODO: I need to clarify in my mind how indexes work...
-  public getIndex(): string {
+  public getId(): string {
     if (typeof this.properties.id === 'string') {
       return this.properties.id
     } else {
+      // To be clear: this happens if we try to check the Id of the object before the promise in the constructor finishes.
+      // THIS SHOULDN'T HAPPEN IF YOU'RE USING THE STATIC `make` AND `getById` FUNCTIONS.
       throw new Error('Attempted to fetch index of object before index was declared.')
     }
   }
@@ -50,10 +80,26 @@ abstract class Model {
 
   // TODO: Implement protected async useSecretProperty(property: string, func: (propertyValue: any) => any): Promise<Result>
 
-  // TODO: Implement protected requireRole(role: Role): (target: any, key: string, descriptor: PropertyDescriptor): void
-  // This will just be a wrapper around the requireRole provided by the main blvd package, making it slightly easier by allowing you to
-  // just pass the original role object for clearer syntax, e.g.,
-  // @this.requireRole('GOOD_BOY') === @requireRole(this.roles.GOOD_BOY) === @requireRole(DogModel.getById(this.id).roles.GOOD_BOY)
+  // This is a decorator you can use on your class functions to ensure the functions are only used of the client has certain roles.
+  public requireRole(role: UnlinkedRole): MethodDecorator { return rr(this.getRole(role)) }
+
+  public getRole(role: UnlinkedRole): Role {
+    const roles = this.constructor.prototype.roles
+
+    if (roles.filter((a: UnlinkedRole) => a === role)) {
+      return {
+        name: role,
+        parent: this.getId()
+      }
+    } else {
+      throw new Error(`Attempted to get role ${role} from a ${this.constructor.name}, but we don't got have that role.`)
+    }
+  }
+
+  // We await this function to know when the Item has been built.
+  public async constructionComplete(): Promise<Result> {
+    return await this.construction
+  }
 
   // TODO: Consider swapping out home grown property types for using React `prop-types`?
   private async checkPropertyTypes(propertyTypes: object, properties: object): Promise<Result> {
@@ -90,6 +136,11 @@ abstract class Model {
   private async generateId(): Promise<string> {
     const r = await randomBytes(32)
     return r.toString('hex')
+  }
+
+  // this is a sneaky beaky shortcut
+  private gpom (prop: string): any {
+    return this.constructor.prototype[prop]
   }
 }
 
