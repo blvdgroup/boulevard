@@ -29,6 +29,10 @@
       "tsx",
       "js",
       "json"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/packages/.*/build"
     ]
   }
 }
