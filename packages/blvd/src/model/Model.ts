@@ -151,7 +151,7 @@ abstract class Model {
   }
 
   // this is a sneaky beaky shortcut
-  private gpom (prop: string): any {
+  private gpom(prop: string): any {
     return this.constructor.prototype[prop]
   }
 }
