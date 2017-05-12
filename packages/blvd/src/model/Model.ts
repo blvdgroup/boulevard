@@ -20,7 +20,6 @@ export interface ObjectThatMightHaveId {
 // to the server. This is generated in this base class. Please don't override it, because that
 // would be bad.
 abstract class Model {
-
   public static propertyTypes: object = {
     id: [PropertyTypes.string]
   }
@@ -29,17 +28,17 @@ abstract class Model {
 
   private construction: Promise<Result>
 
-  public static async getById<M extends Model>(id: string): Promise<M> {
-    return (this.makeInternal(id) as Promise<M>)
+  public static async getById(id: string): Promise<Model> {
+    return (this.makeInternal(id) as Promise<Model>)
   }
 
-  public static async make<M extends Model>(): Promise<M> {
-    return (this.makeInternal() as Promise<M>)
+  public static async make(): Promise<Model> {
+    return (this.makeInternal() as Promise<Model>)
   }
 
-  private static async makeInternal<M extends Model>(id?: string): Promise<M> {
+  private static async makeInternal(id?: string): Promise<Model> {
     log.debug('Making and/or fetching a new Item the right way...')
-    const model: M = new (this.prototype.constructor as ModelConstructor<M>)(id ? { id } : {}, true) // now this is thinking with portals
+    const model: Model = new (this.prototype.constructor as ModelConstructor)(id ? { id } : {}, true) // now this is thinking with portals
     const result = await model.constructionComplete()
     log.debug('Finishing building new model. It was')
     switch (result.status) {
