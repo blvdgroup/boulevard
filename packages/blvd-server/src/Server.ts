@@ -1,7 +1,7 @@
 import micro from 'micro' // TODO: Consider Node 4 support? Micro only supports 6+ but Express sucks
 import { IncomingMessage, ServerResponse } from 'http'
 import { Client } from 'blvd-client'
-import WebSocket, { Server as WSServer } from 'ws'
+import WebSocket, { Server as WSServer } from 'uws'
 import { Server as HTTPServer } from 'http'
 
 interface ServerOptions {
