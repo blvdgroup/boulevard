@@ -7,6 +7,8 @@ import PropertyType from '../propertyTypes/PropertyType'
 import PropertyTypes from '../propertyTypes/PropertyTypes'
 import { Role, UnlinkedRole, requireRole as rr } from '../roles'
 import ModelConstructor from './ModelConstructor'
+import Application from '../Application'
+import coordinator from '../coordinator'
 
 export interface ObjectThatMightHaveId {
   id?: string
@@ -27,6 +29,8 @@ abstract class Model {
   public static roles: Role[] = []
 
   private construction: Promise<Result>
+
+  private app: Application
 
   public static async getById(id: string): Promise<Model> {
     return (this.makeInternal(id) as Promise<Model>)
@@ -73,6 +77,7 @@ abstract class Model {
         this.properties = { ...this.properties, id }
       })
       .then(() => this.checkPropertyTypes(this.gpom('propertyTypes'), this.properties))
+      .then(() => this.getAppFromCoordinator())
   }
 
   public getId(): string {
@@ -148,6 +153,17 @@ abstract class Model {
   private async generateId(): Promise<string> {
     const r = await randomBytes(32)
     return r.toString('hex')
+  }
+
+  private async getAppFromCoordinator(): Promise<Result> {
+    coordinator.emit('app')
+
+    return new Promise((resolve: (...args: any[]) => any, reject: (...args: any[]) => any) => {
+      coordinator.once('app-response', (app: Application) => {
+        this.app = app
+        resolve(app)
+      })
+    }).then(() => ({ status: Status.SUCCESS }))
   }
 
   // this is a sneaky beaky shortcut
