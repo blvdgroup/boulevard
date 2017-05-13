@@ -1,7 +1,10 @@
 import Model from './Model'
 
-interface ModelConstructor<M extends Model> {
-  new (properties?: object): M
+interface ModelConstructor {
+  propertyTypes: object,
+  new (properties?: object, ianctd?: boolean): Model,
+  make (): Promise<Model>,
+  getById(id: string): Promise<Model>
 }
 
 export default ModelConstructor

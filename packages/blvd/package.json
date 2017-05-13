@@ -27,6 +27,8 @@
   },
   "dependencies": {
     "blvd-utils": "canary",
-    "crypto-promise": "^2.0.0"
+    "crypto-promise": "^2.0.0",
+    "eventemitter2": "^4.1.0",
+    "loglevel": "^1.4.1"
   }
 }

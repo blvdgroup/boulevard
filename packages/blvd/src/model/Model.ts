@@ -1,4 +1,5 @@
 import { randomBytes } from 'crypto-promise'
+import log from 'loglevel'
 
 import { Status, Result, reduceResults } from 'blvd-utils'
 
@@ -6,6 +7,8 @@ import PropertyType from '../propertyTypes/PropertyType'
 import PropertyTypes from '../propertyTypes/PropertyTypes'
 import { Role, UnlinkedRole, requireRole as rr } from '../roles'
 import ModelConstructor from './ModelConstructor'
+import Application from '../Application'
+import coordinator from '../coordinator'
 
 export interface ObjectThatMightHaveId {
   id?: string
@@ -19,7 +22,6 @@ export interface ObjectThatMightHaveId {
 // to the server. This is generated in this base class. Please don't override it, because that
 // would be bad.
 abstract class Model {
-
   public static propertyTypes: object = {
     id: [PropertyTypes.string]
   }
@@ -28,41 +30,54 @@ abstract class Model {
 
   private construction: Promise<Result>
 
-  public static async getById<M extends Model>(id: string): Promise<M> {
-    return (this.makeInternal(id) as Promise<M>)
+  private app: Application
+
+  public static async getById(id: string): Promise<Model> {
+    return (this.makeInternal(id) as Promise<Model>)
   }
 
-  public static async make<M extends Model>(): Promise<M> {
-    return (this.makeInternal() as Promise<M>)
+  public static async make(): Promise<Model> {
+    return (this.makeInternal() as Promise<Model>)
   }
 
-  private static async makeInternal<M extends Model>(id?: string): Promise<M> {
-    const model: M = new (this.prototype.constructor as ModelConstructor<M>)(id ? { id } : {}) // now this is thinking with portals
+  private static async makeInternal(id?: string): Promise<Model> {
+    log.debug('Making and/or fetching a new Item the right way...')
+    const model: Model = new (this.prototype.constructor as ModelConstructor)(id ? { id } : {}, true) // now this is thinking with portals
     const result = await model.constructionComplete()
+    log.debug('Finishing building new model. It was')
     switch (result.status) {
       case Status.SUCCESS: return model
-      case Status.FAILURE: throw new Error(result.error)
+      case Status.FAILURE: log.error('Construction on model failed'); throw new Error(result.error)
       default: throw new Error('I have no idea how this error would get thrown. There has been a terrible, awful mistake.')
     }
   }
 
   // TODO: Implement public static async getByIndex(index: string, value: any)
 
-  constructor(public properties: ObjectThatMightHaveId = {}) {
+  constructor(public properties: ObjectThatMightHaveId = {}, iAmNotCallingThisDirectly: boolean = false) {
     // A quick note:
     // This should NOT be called directly (i.e. should NOT be called using new Model(), or even new ClassExtendingModel()). This is because
     // models are built ASYNCHRONOUSLY! If you call new Model(), the next line of code cannot know if the model is finished building and
     // populating. To get around this, we use the static methods `make` and `getById`, which will return promises that return a completed,
     // populated model.
+    if (!iAmNotCallingThisDirectly) {
+      log.error('You FOOL! You absolute SCOUNDREL! You did not HEED THE WARNING of the DOCUMENTATION SCROLL!')
+      log.error('You have created a worthless and unpopulated Item, for you did not allow construction to commence!')
+      log.error('You must NOT create an Item through the new Model() constructor! Use the Model.make() or Model.getById() functions!')
+      log.error('Bah!')
+      throw new Error('Read the documentation scroll and dont use new Model()!')
+    }
 
     // TODO: This construction promise will also have a step where it contacts the server to ask for the properties of this item (if the id
     // exists.) This will probably take up the majority of the "construction" time. Again, this is why we use `make` or `getById`.
+    log.debug('Beginning construction on a new Item instance...')
     this.construction = (!properties.id ? this.generateId() : Promise.resolve(properties.id))
       .then((id: string) => {
         // Then, add the ID to the properties of the item if it doesn't have an ID
         this.properties = { ...this.properties, id }
       })
       .then(() => this.checkPropertyTypes(this.gpom('propertyTypes'), this.properties))
+      .then(() => this.getAppFromCoordinator())
   }
 
   public getId(): string {
@@ -103,6 +118,8 @@ abstract class Model {
 
   // TODO: Consider swapping out home grown property types for using React `prop-types`?
   private async checkPropertyTypes(propertyTypes: object, properties: object): Promise<Result> {
+    log.debug('Checking property types...')
+
     // First, we create an array of results by creating an array of promises (one per property) and waiting on all of them.
     const checkResults: Result[] = await Promise.all(Object.keys(this.properties).map((property: string): Promise<Result> => {
       if (typeof propertyTypes[property] === 'function') {
@@ -138,8 +155,19 @@ abstract class Model {
     return r.toString('hex')
   }
 
+  private async getAppFromCoordinator(): Promise<Result> {
+    coordinator.emit('app')
+
+    return new Promise((resolve: (...args: any[]) => any, reject: (...args: any[]) => any) => {
+      coordinator.once('app-response', (app: Application) => {
+        this.app = app
+        resolve(app)
+      })
+    }).then(() => ({ status: Status.SUCCESS }))
+  }
+
   // this is a sneaky beaky shortcut
-  private gpom (prop: string): any {
+  private gpom(prop: string): any {
     return this.constructor.prototype[prop]
   }
 }
