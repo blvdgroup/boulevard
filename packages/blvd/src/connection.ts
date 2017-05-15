@@ -25,7 +25,7 @@ export class Connection {
   private properties: any
   private contextType: ContextType = getContextType()
 
-  constructor (private layer: ConnectionLayer) {
+  constructor(private layer: ConnectionLayer) {
     this.layer.on('generate-id', () => {
       if (this.contextType === ContextType.SERVER) {
         this.generateId()

@@ -128,7 +128,7 @@ abstract class Model {
     const checkResults: Result[] = await Promise.all(Object.keys(this.properties).map((property: string): Promise<Result> => {
       if (typeof propertyTypes[property] === 'function') {
         // If the property type of the property we're checking is a function, we run the function and return the result.
-        return new Promise((resolve: Function, reject: Function) => {
+        return new Promise((resolve: (...args: any[]) => void, reject: (...args: any[]) => void) => {
           const check: PropertyType = propertyTypes[property]
           resolve(check(this.properties[property], this, this.constructor.prototype))
         })
@@ -136,7 +136,7 @@ abstract class Model {
         // If the property type of the property we're checking is an array, we assume it is an array of functions and run each function
         // before reducing all these results into one result.
         const checks: PropertyType[] = propertyTypes[property]
-        return Promise.all(checks.map((check: Function): Promise<Result> =>
+        return Promise.all(checks.map((check: PropertyType): Promise<Result> =>
           Promise.resolve(check(this.properties[property], this, this.constructor.prototype))
         )).then((results: Result[]) => results.reduce(reduceResults, { status: Status.SUCCESS }))
       }
@@ -178,7 +178,7 @@ abstract class Model {
   // cast an ancient curse on a string and banish it to another realm
   private hexString(str: string): string {
     let result = ''
-    for(var i = 0; i < str.length; i++) {
+    for (let i = 0; i < str.length; i++) {
       result += str.charCodeAt(i).toString(16)
     }
     return result
