@@ -9,10 +9,7 @@ import { Role, UnlinkedRole, requireRole as rr } from '../roles'
 import ModelConstructor from './ModelConstructor'
 import Application from '../Application'
 import coordinator from '../coordinator'
-
-export interface ObjectThatMightHaveId {
-  id?: string
-}
+import { Context, ContextType, getContext } from '../context'
 
 // The Model represents a type of Item which may exist in a boulevard server. It specifies
 // what properties the item might have, what each Item matching this Model does upon creation,
@@ -21,6 +18,11 @@ export interface ObjectThatMightHaveId {
 // Every Item, regardless of which Model it is based off, has a unique id which identifies it
 // to the server. This is generated in this base class. Please don't override it, because that
 // would be bad.
+
+export interface FuncIdStorage {
+  [index: string]: string
+}
+
 abstract class Model {
   public static propertyTypes: object = {
     id: [PropertyTypes.string]
@@ -28,9 +30,13 @@ abstract class Model {
 
   public static roles: Role[] = []
 
+  protected context: Context
+
   private construction: Promise<Result>
 
   private app: Application
+
+  private tossedFunctions: FuncIdStorage
 
   public static async getById(id: string): Promise<Model> {
     return (this.makeInternal(id) as Promise<Model>)
@@ -43,8 +49,7 @@ abstract class Model {
   private static async makeInternal(id?: string): Promise<Model> {
     log.debug('Making and/or fetching a new Item the right way...')
     const model: Model = new (this.prototype.constructor as ModelConstructor)(id ? { id } : {}, true) // now this is thinking with portals
-    const result = await model.constructionComplete()
-    log.debug('Finishing building new model. It was')
+    const result = await model.construction
     switch (result.status) {
       case Status.SUCCESS: return model
       case Status.FAILURE: log.error('Construction on model failed'); throw new Error(result.error)
@@ -54,7 +59,7 @@ abstract class Model {
 
   // TODO: Implement public static async getByIndex(index: string, value: any)
 
-  constructor(public properties: ObjectThatMightHaveId = {}, iAmNotCallingThisDirectly: boolean = false) {
+  constructor(public properties: any = {}, iAmNotCallingThisDirectly: boolean = false) {
     // A quick note:
     // This should NOT be called directly (i.e. should NOT be called using new Model(), or even new ClassExtendingModel()). This is because
     // models are built ASYNCHRONOUSLY! If you call new Model(), the next line of code cannot know if the model is finished building and
@@ -77,21 +82,9 @@ abstract class Model {
         this.properties = { ...this.properties, id }
       })
       .then(() => this.checkPropertyTypes(this.gpom('propertyTypes'), this.properties))
+      .then(() => this.getModelContext())
       .then(() => this.getAppFromCoordinator())
   }
-
-  public getId(): string {
-    if (typeof this.properties.id === 'string') {
-      return this.properties.id
-    } else {
-      // To be clear: this happens if we try to check the Id of the object before the promise in the constructor finishes.
-      // THIS SHOULDN'T HAPPEN IF YOU'RE USING THE STATIC `make` AND `getById` FUNCTIONS.
-      throw new Error('Attempted to fetch index of object before index was declared.')
-    }
-  }
-
-  // TODO: Implement protected async toss(func: () => void): Promise<Result>
-  // Also consider implementing as decorator?
 
   // TODO: Implement protected async useSecretProperty(property: string, func: (propertyValue: any) => any): Promise<Result>
 
@@ -104,16 +97,27 @@ abstract class Model {
     if (roles.filter((a: UnlinkedRole) => a === role)) {
       return {
         name: role,
-        parent: this.getId()
+        parent: this.properties.id
       }
     } else {
       throw new Error(`Attempted to get role ${role} from a ${this.constructor.name}, but we don't got have that role.`)
     }
   }
 
-  // We await this function to know when the Item has been built.
-  public async constructionComplete(): Promise<Result> {
-    return await this.construction
+  public async toss(f: (context: Context, ...args: any[]) => Promise<any>, context?: Context): Promise<any> {
+    if (!this.tossedFunctions[this.hexString(f.toString()).slice(0, 32)]) {
+      throw new Error('Attempted to run tossed function, but tossed function does not appear to be registered.')
+    }
+    if (this.context.type === ContextType.SERVER) {
+      return await f(context || this.context)
+    } else {
+      return await this.app.handleToss(this.constructor.prototype, this.hexString(f.toString()).slice(0, 32))
+    }
+  }
+
+  public registerTossedFunction(key: string): void {
+    if (typeof this[key] !== 'function') throw new Error(`Attempted to register tossed function ${key}, but it's not a function.`)
+    this.tossedFunctions[this.hexString(this[key].toString()).slice(0, 32)] = key
   }
 
   // TODO: Consider swapping out home grown property types for using React `prop-types`?
@@ -164,6 +168,20 @@ abstract class Model {
         resolve(app)
       })
     }).then(() => ({ status: Status.SUCCESS }))
+  }
+
+  private async getModelContext(): Promise<Result> {
+    this.context = await getContext()
+    return { status: Status.SUCCESS }
+  }
+
+  // cast an ancient curse on a string and banish it to another realm
+  private hexString(str: string): string {
+    let result = ''
+    for(var i = 0; i < str.length; i++) {
+      result += str.charCodeAt(i).toString(16)
+    }
+    return result
   }
 
   // this is a sneaky beaky shortcut
