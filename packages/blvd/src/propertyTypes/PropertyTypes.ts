@@ -1,31 +1,14 @@
+import { Status } from 'blvd-utils'
+
 import PropertyType from './PropertyType'
 
 /**
- * The PropertyTypes class allows you to check your properties against a variety
- * of predefined properties and pretty easily set unique identities on each
- * property. A PropertyType is really just a function, which returns a function,
- * which is passed a unique set of variables, which should return true if the
- * property is valid and false otherwise.
- *
- * The first part of the PropertyType is to pass arbitrary variables to the
- * PropertyType by the programmer defining the properties. If there are no
- * variables to be passed, you should have an empty function wrapper anyway,
- * for consistency.
- *
- * That function should return another function, which is passed four variables:
- * - First, the property that is to be checked. Usually the only variable used,
- *   except for some special properties.
- * - Second, the Item the property is a property of.
- * - Third, the Model the Item is an item of.
- * - Fourth, the context (session or global) the Item is a member of.
- *
- * This function should true, false, or a promise which eventually resolves to
- * true or false. Anything other than true or false is considered an error.
+ * I wrote a bunch of stuff here but it's aaaall very wrong now so I have deleted what was written here.
  */
 class PropertyTypes {
-  public static string: PropertyType = (o: any) => typeof o === 'string'
-  public static number: PropertyType = (o: any) => typeof o === 'number'
-  public static boolean: PropertyType = (o: any) => typeof o === 'boolean'
+  public static string: PropertyType = (o: any) => typeof o === 'string' ? { status: Status.SUCCESS } : { status: Status.FAILURE }
+  public static number: PropertyType = (o: any) => typeof o === 'number' ? { status: Status.SUCCESS } : { status: Status.FAILURE }
+  public static boolean: PropertyType = (o: any) => typeof o === 'boolean' ? { status: Status.SUCCESS } : { status: Status.FAILURE }
 }
 
 export default PropertyTypes
