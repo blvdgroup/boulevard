@@ -23,13 +23,13 @@
   "devDependencies": {
     "rimraf": "^2.6.1",
     "tslint": "^5.2.0",
+    "tslint-eslint-rules": "^4.0.0",
     "typescript": "^2.2.1"
   },
   "dependencies": {
     "blvd-utils": "canary",
     "crypto-promise": "^2.0.0",
     "eventemitter2": "^4.1.0",
-    "loglevel": "^1.4.1",
-    "tslint-eslint-rules": "^4.0.0"
+    "loglevel": "^1.4.1"
   }
 }
