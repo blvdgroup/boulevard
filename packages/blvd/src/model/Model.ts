@@ -23,6 +23,13 @@ export interface FuncIdStorage {
   [index: string]: string
 }
 
+// Properties for a Model. You can extend this interface to include anything[1] you want.
+//
+// [1]: https://www.youtube.com/watch?v=6ExVBVonRKQ
+export interface ModelProperties {
+  [key: string]: any;
+}
+
 abstract class Model {
   public static propertyTypes: object = {
     id: [PropertyTypes.string]
@@ -38,17 +45,19 @@ abstract class Model {
 
   private tossedFunctions: FuncIdStorage
 
-  public static async getById(id: string): Promise<Model> {
-    return (this.makeInternal(id) as Promise<Model>)
+  // TODO: the latest `makeInternal()` changes breaks this method. Rethink of a way this would work.
+  // public static async getById(id: string): Promise<Model> {
+  //   return (this.makeInternal(id) as Promise<Model>)
+  // }
+
+  public static async make(properties: ModelProperties): Promise<Model> {
+    return (this.makeInternal(properties) as Promise<Model>)
   }
 
-  public static async make(): Promise<Model> {
-    return (this.makeInternal() as Promise<Model>)
-  }
-
-  private static async makeInternal(id?: string): Promise<Model> {
+  private static async makeInternal(properties: ModelProperties): Promise<Model> {
     log.debug('Making and/or fetching a new Item the right way...')
-    const model: Model = new (this.prototype.constructor as ModelConstructor)(id ? { id } : {}, true) // now this is thinking with portals
+    // now this is thinking with portals
+    const model: Model = new (this.prototype.constructor as ModelConstructor)(properties.id ? { id: properties.id } : {}, true)
     const result = await model.construction
     switch (result.status) {
       case Status.SUCCESS: return model
@@ -59,7 +68,7 @@ abstract class Model {
 
   // TODO: Implement public static async getByIndex(index: string, value: any)
 
-  constructor(public properties: any = {}, iAmNotCallingThisDirectly: boolean = false) {
+  constructor(public properties: ModelProperties = {}, iAmNotCallingThisDirectly: boolean = false) {
     // A quick note:
     // This should NOT be called directly (i.e. should NOT be called using new Model(), or even new ClassExtendingModel()). This is because
     // models are built ASYNCHRONOUSLY! If you call new Model(), the next line of code cannot know if the model is finished building and
