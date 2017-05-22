@@ -26,7 +26,7 @@ export interface FuncIdStorage {
 // Properties for a Model. You can extend this interface to include anything[1] you want.
 //
 // [1]: https://www.youtube.com/watch?v=6ExVBVonRKQ
-export interface ModelProperties {
+export interface ModelPropertiesObject {
   [key: string]: any;
 }
 
@@ -50,11 +50,11 @@ abstract class Model {
   //   return (this.makeInternal(id) as Promise<Model>)
   // }
 
-  public static async make(properties: ModelProperties): Promise<Model> {
+  public static async make(properties: ModelPropertiesObject): Promise<Model> {
     return (this.makeInternal(properties) as Promise<Model>)
   }
 
-  private static async makeInternal(properties: ModelProperties): Promise<Model> {
+  private static async makeInternal(properties: ModelPropertiesObject): Promise<Model> {
     log.debug('Making and/or fetching a new Item the right way...')
     // now this is thinking with portals
     const model: Model = new (this.prototype.constructor as ModelConstructor)(properties.id ? { id: properties.id } : {}, true)
@@ -68,7 +68,7 @@ abstract class Model {
 
   // TODO: Implement public static async getByIndex(index: string, value: any)
 
-  constructor(public properties: ModelProperties = {}, iAmNotCallingThisDirectly: boolean = false) {
+  constructor(public properties: ModelPropertiesObject = {}, iAmNotCallingThisDirectly: boolean = false) {
     // A quick note:
     // This should NOT be called directly (i.e. should NOT be called using new Model(), or even new ClassExtendingModel()). This is because
     // models are built ASYNCHRONOUSLY! If you call new Model(), the next line of code cannot know if the model is finished building and
