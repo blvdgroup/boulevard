@@ -9,36 +9,33 @@ class Car extends Model {
     inStock: PropertyTypes.boolean
   }
 
-  constructor (props: ModelPropertiesObject) {
+  constructor(props: ModelPropertiesObject) {
     super(props)
   }
 }
 
-describe('Model', () => {
-  it('creates the model properly', () => {
-    let lamborghiniHuracan: Car
-
-    Car.make({
-      name: 'Lamborghini Huracán',
-      year: 2014,
-      inStock: true
-    }).then((res: Car) => {
-      lamborghiniHuracan = res
-    }).catch((err: any) => { console.error(err) })
-    expect(lamborghiniHuracan).toBeInstanceOf(Car)
+const makeSampleModel = () => {
+  return Car.make({
+    name: 'Lamborghini Huracán',
+    year: 2014,
+    inStock: true
   })
-  it('has the correct properties', () => {
-    let lamborghiniHuracan: Car
+}
 
-    Car.make({
-      name: 'Lamborghini Huracán',
-      year: 2014,
-      inStock: true
-    }).then((res: Car) => {
-      lamborghiniHuracan = res
-    }).catch((err: any) => { console.error(err) })
-    expect(lamborghiniHuracan.properties.name).toBe('Lamborghini Huracán')
-    expect(lamborghiniHuracan.properties.year).toBe(2014)
-    expect(lamborghiniHuracan.properties.inStock).toBe(true)
+describe('Model', () => {
+  let data: Car = null
+
+  beforeAll(() => makeSampleModel().then((res: Car) => {
+    data = res
+  }))
+
+  it('creates the model properly', () => {
+    expect(data).toBeInstanceOf(Car)
+  })
+
+  it('has the correct properties', () => {
+    expect(data.properties.name).toBe('Lamborghini Huracán')
+    expect(data.properties.year).toBe(2014)
+    expect(data.properties.inStock).toBe(true)
   })
 })
