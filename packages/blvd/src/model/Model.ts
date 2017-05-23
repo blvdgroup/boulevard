@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto-promise'
-import log from 'loglevel'
+import * as log from 'loglevel'
 
 import { Status, Result, reduceResults } from 'blvd-utils'
 
