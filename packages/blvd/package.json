@@ -6,6 +6,7 @@
   "types": "./build/index.d.ts",
   "scripts": {
     "build": "rimraf ./build && tsc",
+    "test": "jest",
     "lint": "tslint --force -c ./tslint.json src/**/*.ts",
     "prepublish": "npm run build",
     "watch": "rimraf ./build && tsc --watch"
@@ -21,7 +22,10 @@
   },
   "homepage": "https://github.com/blvdgroup/boulevard#readme",
   "devDependencies": {
+    "@types/jest": "^19.2.3",
+    "jest": "^20.0.1",
     "rimraf": "^2.6.1",
+    "ts-jest": "^20.0.3",
     "tslint": "^5.2.0",
     "tslint-eslint-rules": "^4.0.0",
     "typescript": "^2.2.1"
@@ -31,5 +35,22 @@
     "crypto-promise": "^2.0.0",
     "eventemitter2": "^4.1.0",
     "loglevel": "^1.4.1"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {
+      "^.+\\.tsx?$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+    },
+    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "json"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/packages/.*/build"
+    ]
   }
 }

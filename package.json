@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "test": "jest"
+    "test": "lerna run test"
   },
   "devDependencies": {
     "@types/jest": "^19.2.3",
