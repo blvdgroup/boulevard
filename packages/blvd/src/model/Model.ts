@@ -53,7 +53,6 @@ abstract class Model {
   }
 
   private static async makeInternal(properties: ModelPropertiesObject): Promise<Model> {
-    log.setLevel(log.levels.DEBUG)
     log.debug('Making and/or fetching a new Item the right way...')
     // now this is thinking with portals
     const model: Model =
