@@ -7,8 +7,6 @@ import PropertyType from '../propertyTypes/PropertyType'
 import PropertyTypes from '../propertyTypes/PropertyTypes'
 import { Role, UnlinkedRole, requireRole as rr } from '../roles'
 import ModelConstructor from './ModelConstructor'
-import Application from '../Application'
-import coordinator from '../coordinator'
 import { Context, ContextType, getContext } from '../context'
 
 // The Model represents a type of Item which may exist in a boulevard server. It specifies
@@ -32,16 +30,16 @@ export interface ModelPropertiesObject {
 
 abstract class Model {
   public static propertyTypes: object = {
-    id: [PropertyTypes.string]
+    id: PropertyTypes.string
   }
 
   public static roles: Role[] = []
 
+  public properties: ModelPropertiesObject = {}
+
   protected context: Context
 
   private construction: Promise<Result>
-
-  private app: Application
 
   private tossedFunctions: FuncIdStorage
 
@@ -55,9 +53,11 @@ abstract class Model {
   }
 
   private static async makeInternal(properties: ModelPropertiesObject): Promise<Model> {
+    log.setLevel(log.levels.DEBUG)
     log.debug('Making and/or fetching a new Item the right way...')
     // now this is thinking with portals
-    const model: Model = new (this.prototype.constructor as ModelConstructor)(properties.id ? { id: properties.id } : {}, true)
+    const model: Model =
+      new (this.prototype.constructor as ModelConstructor)(properties.id ? { ...properties, id: properties.id } : properties, true)
     const result = await model.construction
     switch (result.status) {
       case Status.SUCCESS: return model
@@ -68,13 +68,13 @@ abstract class Model {
 
   // TODO: Implement public static async getByIndex(index: string, value: any)
 
-  constructor(public properties: ModelPropertiesObject = {}, iAmNotCallingThisDirectly: boolean = false) {
+  constructor(properties: ModelPropertiesObject = {}, iAmNotCallingThisDirectly: boolean = false) {
     // A quick note:
     // This should NOT be called directly (i.e. should NOT be called using new Model(), or even new ClassExtendingModel()). This is because
     // models are built ASYNCHRONOUSLY! If you call new Model(), the next line of code cannot know if the model is finished building and
     // populating. To get around this, we use the static methods `make` and `getById`, which will return promises that return a completed,
     // populated model.
-    if (!iAmNotCallingThisDirectly) {
+    if (!!iAmNotCallingThisDirectly) {
       log.error('You FOOL! You absolute SCOUNDREL! You did not HEED THE WARNING of the DOCUMENTATION SCROLL!')
       log.error('You have created a worthless and unpopulated Item, for you did not allow construction to commence!')
       log.error('You must NOT create an Item through the new Model() constructor! Use the Model.make() or Model.getById() functions!')
@@ -88,11 +88,11 @@ abstract class Model {
     this.construction = (!properties.id ? this.generateId() : Promise.resolve(properties.id))
       .then((id: string) => {
         // Then, add the ID to the properties of the item if it doesn't have an ID
-        this.properties = { ...this.properties, id }
+        this.properties = { ...properties, id }
       })
-      .then(() => this.checkPropertyTypes(this.gpom('propertyTypes'), this.properties))
+      .then(() => this.checkPropertyTypes((this.constructor as any).propertyTypes, this.properties))
       .then(() => this.getModelContext())
-      .then(() => this.getAppFromCoordinator())
+      .then(() => { log.debug(this.properties); return { status: Status.SUCCESS } })
   }
 
   // TODO: Implement protected async useSecretProperty(property: string, func: (propertyValue: any) => any): Promise<Result>
@@ -120,7 +120,8 @@ abstract class Model {
     if (this.context.type === ContextType.SERVER) {
       return await f(context || this.context)
     } else {
-      return await this.app.handleToss(this.constructor.prototype, this.hexString(f.toString()).slice(0, 32))
+      // TODO
+      // return await this.app.handleToss(this.constructor.prototype, this.hexString(f.toString()).slice(0, 32))
     }
   }
 
@@ -134,14 +135,14 @@ abstract class Model {
     log.debug('Checking property types...')
 
     // First, we create an array of results by creating an array of promises (one per property) and waiting on all of them.
-    const checkResults: Result[] = await Promise.all(Object.keys(this.properties).map((property: string): Promise<Result> => {
+    const checkResults: Result[] = await Promise.all(Object.keys(properties).map((property: string): Promise<Result> => {
+      log.debug(`Mapping property ${property}...`)
       if (typeof propertyTypes[property] === 'function') {
+        log.debug(`${property} propType is a function, so we're gonna check that.`)
         // If the property type of the property we're checking is a function, we run the function and return the result.
-        return new Promise((resolve: (...args: any[]) => void, reject: (...args: any[]) => void) => {
-          const check: PropertyType = propertyTypes[property]
-          resolve(check(this.properties[property], this, this.constructor.prototype))
-        })
+        return Promise.resolve((propertyTypes[property])(this.properties[property], this, this.constructor.prototype))
       } else if (Array.isArray(propertyTypes[property])) {
+        log.debug(`${property} propType is an array of functions, so we're gonna check those.`)
         // If the property type of the property we're checking is an array, we assume it is an array of functions and run each function
         // before reducing all these results into one result.
         const checks: PropertyType[] = propertyTypes[property]
@@ -149,6 +150,7 @@ abstract class Model {
           Promise.resolve(check(this.properties[property], this, this.constructor.prototype))
         )).then((results: Result[]) => results.reduce(reduceResults, { status: Status.SUCCESS }))
       }
+
       // If the property type is neither a function nor an array of functions, we return a failing status because you gave a bad property
       // type.
       return Promise.resolve({
@@ -156,6 +158,8 @@ abstract class Model {
         error: 'One of the provided property types was not a function or array of functions.'
       })
     }))
+
+    log.debug(checkResults)
 
     // We then reduce all the results into a single result object.
     return checkResults.reduce(reduceResults, { status: Status.SUCCESS })
@@ -168,18 +172,8 @@ abstract class Model {
     return r.toString('hex')
   }
 
-  private async getAppFromCoordinator(): Promise<Result> {
-    coordinator.emit('app')
-
-    return new Promise((resolve: (...args: any[]) => any, reject: (...args: any[]) => any) => {
-      coordinator.once('app-response', (app: Application) => {
-        this.app = app
-        resolve(app)
-      })
-    }).then(() => ({ status: Status.SUCCESS }))
-  }
-
   private async getModelContext(): Promise<Result> {
+    log.debug('Getting model context...')
     this.context = await getContext()
     return { status: Status.SUCCESS }
   }
@@ -191,11 +185,6 @@ abstract class Model {
       result += str.charCodeAt(i).toString(16)
     }
     return result
-  }
-
-  // this is a sneaky beaky shortcut
-  private gpom(prop: string): any {
-    return this.constructor.prototype[prop]
   }
 }
 

@@ -16,7 +16,8 @@ const determineId = async (): Promise<string> => {
   // Every client gets a unique ID which identifies it to the server. This is also included in the context.
 
   // First, get the underlying connection.
-  const c = await connection.requestConnection()
+  // TODO
+  // const c = await connection.requestConnection()
 
   // TODO: Use unified API to get connection id. Probably just a getId() call?
   return 'id'
@@ -44,7 +45,7 @@ export const getContextType = (): ContextType => {
 
   // If the above doesn't work, we assume we're a client if the window object exists.
   // This isn't foolproof if some dumb dumb puts a global window object on a nodejs server, but it's better than nothing.
-  return window ? ContextType.CLIENT : ContextType.SERVER
+  return typeof window !== 'undefined' ? ContextType.CLIENT : ContextType.SERVER
 }
 
 export const getContext = async (): Promise<Context> => ({ type: getContextType(), id: await determineId() })

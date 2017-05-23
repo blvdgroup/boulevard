@@ -3,7 +3,6 @@ import ModelConstructor from './model/ModelConstructor'
 import PropertyTypes from './propertyTypes/PropertyTypes'
 import { Role, requireRole } from './roles'
 import connection from './connection'
-import Application from './Application'
 
 import { Result } from 'blvd-utils'
 
@@ -17,7 +16,6 @@ export {
   Role,
   requireRole,
   connection,
-  Application,
   ModelConstructor,
   Result
 }
