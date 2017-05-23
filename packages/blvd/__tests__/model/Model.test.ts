@@ -14,28 +14,20 @@ class Car extends Model {
   }
 }
 
-const makeSampleModel = () => {
-  return Car.make({
+describe('Model', () => {
+  const lamborghini = Car.make({
     name: 'Lamborghini Huracán',
     year: 2014,
     inStock: true
   })
-}
 
-describe('Model', () => {
-  let data: Car = null
-
-  beforeAll(() => makeSampleModel().then((res: Car) => {
-    data = res
-  }))
-
-  it('creates the model properly', () => {
-    expect(data).toBeInstanceOf(Car)
+  it('creates the model properly', async () => {
+    expect(await lamborghini).toBeInstanceOf(Car)
   })
 
-  it('has the correct properties', () => {
-    expect(data.properties.name).toBe('Lamborghini Huracán')
-    expect(data.properties.year).toBe(2014)
-    expect(data.properties.inStock).toBe(true)
+  it('has the correct properties', async () => {
+    expect((await lamborghini).properties.name).toBe('Lamborghini Huracán')
+    expect((await lamborghini).properties.year).toBe(2014)
+    expect((await lamborghini).properties.inStock).toBe(true)
   })
 })
