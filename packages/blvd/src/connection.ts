@@ -7,7 +7,7 @@ import { getContextType, ContextType } from './context'
 
 const connectionPasser = new EE()
 
-type EventHandler = (event: string, callback: (...args: any[]) => any) => any
+export type EventHandler = (event: string, callback: (...args: any[]) => any) => any
 
 // The ConnectionLayer is the shared layer through which both types of connection are parsed through. Although a raw client connection and
 // a raw server connection look different, we construct them to have the same API (outlined here, very similar to an EventEmitter) and then
@@ -15,17 +15,17 @@ type EventHandler = (event: string, callback: (...args: any[]) => any) => any
 //
 // The important thing to note about the connection layer is that although it may look the same as an EventEmitter it is constructed so that
 // running an emit call on the client should ONLY trigger event handlers on the server, and vice versa.
-interface ConnectionLayer {
+export interface ConnectionLayer {
   on: EventHandler,
   once: EventHandler,
   emit: (event: string, ...args: any[]) => any
 }
 
-class Connection {
+export class Connection {
   private properties: any
   private contextType: ContextType = getContextType()
 
-  constructor (private layer: ConnectionLayer) {
+  constructor(private layer: ConnectionLayer) {
     this.layer.on('generate-id', () => {
       if (this.contextType === ContextType.SERVER) {
         this.generateId()
@@ -133,8 +133,8 @@ connectionPasser.on('connection-server-raw', (c: any): void => {
 export default {
   requestConnection: () => {
     connectionPasser.emit('request-connection')
-    return new Promise((resolve: (...args: any[]) => any, reject: (...args: any[]) => any) => {
-      connectionPasser.once('connection', resolve)
+    return new Promise((resolve: (connection: Connection) => void, reject: (reason?: any) => void) => {
+      connectionPasser.once('connection', (c: Connection) => { resolve(c) })
     })
   },
   emit: (event: string, ...args: any[]) => connectionPasser.emit(event, ...args),
