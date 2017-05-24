@@ -23,7 +23,7 @@
   "devDependencies": {
     "rimraf": "^2.6.1",
     "tslint": "^4.5.1",
-    "typescript": "^2.2.1"
+    "typescript": "^2.3.2"
   },
   "dependencies": {
     "blvd-utils": "canary",
