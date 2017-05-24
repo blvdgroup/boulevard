@@ -22,10 +22,17 @@ describe('Model', () => {
   })
 
   it('creates the model properly', async () => {
+    expect.assertions(1)
     expect(await lamborghini).toBeInstanceOf(Car)
   })
 
+  it('has an id which is a string', async () => {
+    expect.assertions(1)
+    expect((await lamborghini).properties.id).toBeDefined()
+  })
+
   it('has the correct properties', async () => {
+    expect.assertions(3)
     expect((await lamborghini).properties.name).toBe('Lamborghini Huracán')
     expect((await lamborghini).properties.year).toBe(2014)
     expect((await lamborghini).properties.inStock).toBe(true)
