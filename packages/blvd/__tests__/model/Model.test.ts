@@ -27,8 +27,9 @@ describe('Model', () => {
   })
 
   it('has an id which is a string', async () => {
-    expect.assertions(1)
+    expect.assertions(2)
     expect((await lamborghini).properties.id).toBeDefined()
+    expect(typeof (await lamborghini).properties.id).toEqual('string')
   })
 
   it('has the correct properties', async () => {
