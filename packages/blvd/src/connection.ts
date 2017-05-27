@@ -4,6 +4,7 @@ import { randomBytes } from 'crypto-promise'
 import { Result, Status } from 'blvd-utils'
 
 import { getContextType, ContextType } from './context'
+import ModelConstructor from './Model/ModelConstructor'
 
 const connectionPasser = new EE()
 
@@ -45,6 +46,12 @@ export class Connection {
         this.layer.emit(`response-${property}`, { status: Status.FAILURE, error: 'Property does not exist over here.' }, null)
       }
     })
+
+    if (getContextType() === ContextType.SERVER) {
+      this.layer.on('make-item', (attemptId: string, name: string, props: object) => {
+        // TODO
+      })
+    }
   }
 
   public async getId(): Promise<string> {
@@ -62,6 +69,28 @@ export class Connection {
     }
 
     throw new Error('Tried to get the ID of our connection, but somehow managed to break everything instead.')
+  }
+
+  public async makeItem(model: ModelConstructor, props: object = {}): Promise<string> {
+    // if we're a server: wait, what
+    if (getContextType() === ContextType.SERVER)
+      throw new Error('Attempted to ask the server to make an item while also being the server.')
+
+    // just wanna take this comment to suggest the song "death, thrice drawn" by the scary jokes
+    // it's uh floating around tumblr at the time of this comment but it'll probably make its way onto an lp at some point
+    // they're on bandcamp and really cool
+
+    // this is hacky. we have to communicate using the model's name to the other end, because transmitting the whole model across seems like
+    // well a bad idea, in general. sorta pointless.
+    const name = model.prototype.constructor.name
+    const attemptId = Math.random().toString(16).slice(2, 11)
+    this.layer.emit('make-item', attemptId, name, props)
+    return new Promise((resolve: (id: string) => void, reject: (reason?: any) => void) => {
+      this.layer.once(`make-item-result-${attemptId}`, (result: Result, id: string) => {
+        if (result.status === Status.SUCCESS) resolve(id)
+        throw new Error(`Couldn't make an item on the server end, because ${result.error}.`)
+      })
+    })
   }
 
   private async generateId(): Promise<string> {
