@@ -1,6 +1,6 @@
 # boulevard
 
-**This project is in a pre-alpha state, and none of the APIs described below should be considered implemented. When traffic reaches a state where all of the planned features are implemented, i.e. 0.1, this warning will be removed. Until this warning is removed, do not be surprised if nothing works, because we haven't built it yet.**
+**This project is in a pre-alpha state, and none of the APIs described below should be considered implemented. When boulevard reaches a state where all of the planned features are implemented, i.e. 0.1, this warning will be removed. Until this warning is removed, do not be surprised if nothing works, because we haven't built it yet.**
 
 Boulevard is a framework for building full-stack apps on JavaScript. If it was a dog, it would be a Samoyed - not too big, but very powerful, and capable of herding small children.
 
@@ -68,7 +68,7 @@ Boulevard is managed as a monorepo with independent versioning.
 
 | Package        | Version                                                                                       |
 |----------------|-----------------------------------------------------------------------------------------------|
-| `blvd`         | [![npm](https://img.shields.io/npm/v/blvd.svg)](https://npmjs.org/package/blvd)               | 
+| `blvd`         | [![npm](https://img.shields.io/npm/v/blvd.svg)](https://npmjs.org/package/blvd)               |
 | `blvd-server`  | [![npm](https://img.shields.io/npm/v/blvd-server.svg)](https://npmjs.org/package/blvd-server) |
 | `blvd-client`  | [![npm](https://img.shields.io/npm/v/blvd-client.svg)](https://npmjs.org/package/blvd-client) |
 
