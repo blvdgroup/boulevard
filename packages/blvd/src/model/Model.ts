@@ -7,7 +7,8 @@ import PropertyType from '../propertyTypes/PropertyType'
 import PropertyTypes from '../propertyTypes/PropertyTypes'
 import { Role, UnlinkedRole, requireRole as rr } from '../roles'
 import ModelConstructor from './ModelConstructor'
-import { Context, ContextType, getContext } from '../context'
+import { Context, ContextType, getContext, getContextType } from '../context'
+import connection from '../connection'
 
 // The Model represents a type of Item which may exist in a boulevard server. It specifies
 // what properties the item might have, what each Item matching this Model does upon creation,
@@ -29,11 +30,11 @@ export interface ModelPropertiesObject {
 }
 
 abstract class Model {
-  public static propertyTypes: object = {
+  public static roles: Role[] = []
+
+  private static inherentProps: object = {
     id: PropertyTypes.string
   }
-
-  public static roles: Role[] = []
 
   public properties: ModelPropertiesObject = {}
 
@@ -48,15 +49,39 @@ abstract class Model {
   //   return (this.makeInternal(id) as Promise<Model>)
   // }
 
-  public static async make(properties: ModelPropertiesObject): Promise<Model> {
-    return (this.makeInternal(properties) as Promise<Model>)
+  public static async make(properties: ModelPropertiesObject, requestingClient?: string): Promise<Model> {
+    // The make function takes several steps before it actually creates the model
+
+    // First we run through the props and ensure they are all valid.
+    // We're gonna end up doing this again on the server, but checking here before we do means we can fail early and save time.
+    const propChecks = { ...((this.prototype.constructor as any).props || {}), ...Model.inherentProps }
+    const propCheckResult = await this.checkProps(propChecks, properties)
+    if (propCheckResult.status === Status.FAILURE) throw new Error(propCheckResult.error)
+
+    // Now that the properties passed are validated let's check if we're on the server or the client.
+    const contextType = getContextType()
+    const client = contextType === ContextType.CLIENT
+
+    // If we're a client, we request that the server make a new item with the given properties.
+    if (client) {
+      const c = await connection.requestConnection()
+      // TODO: Send request to create item
+      // TODO: Handle response to create item, both in failing + success scenarios
+    } else if (contextType === ContextType.SERVER) {
+      // We are the server, so just make the item
+      const item = this.makeInternal(properties)
+      // TODO: Emit item ID to requestingClient so that those waiting for the item will know
+      return item
+    }
+
+    throw new Error('Attempted to make thing, but got here for some reason.')
   }
 
   private static async makeInternal(properties: ModelPropertiesObject): Promise<Model> {
     log.debug('Making and/or fetching a new Item the right way...')
     // now this is thinking with portals
     const model: Model =
-      new (this.prototype.constructor as ModelConstructor)(properties.id ? { ...properties, id: properties.id } : properties, true)
+      new (this.prototype.constructor as ModelConstructor)(properties, true)
     const result = await model.construction
     switch (result.status) {
       case Status.SUCCESS: return model
@@ -64,6 +89,41 @@ abstract class Model {
       default: throw new Error('I have no idea how this error would get thrown. There has been a terrible, awful mistake.')
     }
   }
+
+  private static async checkProps(propChecks: object, props: object): Promise<Result> {
+    log.debug('Checking property types...')
+
+    // First, we create an array of results by creating an array of promises (one per property) and waiting on all of them.
+    const checkResults: Result[] = await Promise.all(Object.keys(props).map((property: string): Promise<Result> => {
+      log.debug(`Mapping property ${property}...`)
+      if (typeof propChecks[property] === 'function') {
+        log.debug(`${property} propType is a function, so we're gonna check that.`)
+        // If the property type of the property we're checking is a function, we run the function and return the result.
+        return Promise.resolve((propChecks[property] as PropertyType)(props[property], property))
+      } else if (Array.isArray(propChecks[property])) {
+        log.debug(`${property} propType is an array of functions, so we're gonna check those.`)
+        // If the property type of the property we're checking is an array, we assume it is an array of functions and run each function
+        // before reducing all these results into one result.
+        const checks: PropertyType[] = propChecks[property]
+        return Promise.all(checks.map((check: PropertyType): Promise<Result> =>
+          Promise.resolve(check(props[property], property))
+        )).then((results: Result[]) => results.reduce(reduceResults, { status: Status.SUCCESS }))
+      }
+
+      // If the property type is neither a function nor an array of functions, we return a failing status because you gave a bad property
+      // type.
+      return Promise.resolve({
+        status: Status.FAILURE,
+        error: 'One of the provided property types was not a function or array of functions.'
+      })
+    }))
+
+    log.debug(checkResults)
+
+    // We then reduce all the results into a single result object.
+    return checkResults.reduce(reduceResults, { status: Status.SUCCESS })
+  }
+
 
   // TODO: Implement public static async getByIndex(index: string, value: any)
 
@@ -89,7 +149,6 @@ abstract class Model {
         // Then, add the ID to the properties of the item if it doesn't have an ID
         this.properties = { ...properties, id }
       })
-      .then(() => this.checkPropertyTypes((this.constructor as any).propertyTypes, this.properties))
       .then(() => this.getModelContext())
       .then(() => { log.debug(this.properties); return { status: Status.SUCCESS } })
   }
@@ -130,40 +189,7 @@ abstract class Model {
   }
 
   // TODO: Consider swapping out home grown property types for using React `prop-types`?
-  private async checkPropertyTypes(propertyTypes: object, properties: object): Promise<Result> {
-    log.debug('Checking property types...')
-
-    // First, we create an array of results by creating an array of promises (one per property) and waiting on all of them.
-    const checkResults: Result[] = await Promise.all(Object.keys(properties).map((property: string): Promise<Result> => {
-      log.debug(`Mapping property ${property}...`)
-      if (typeof propertyTypes[property] === 'function') {
-        log.debug(`${property} propType is a function, so we're gonna check that.`)
-        // If the property type of the property we're checking is a function, we run the function and return the result.
-        return Promise.resolve((propertyTypes[property])(this.properties[property], this, this.constructor.prototype))
-      } else if (Array.isArray(propertyTypes[property])) {
-        log.debug(`${property} propType is an array of functions, so we're gonna check those.`)
-        // If the property type of the property we're checking is an array, we assume it is an array of functions and run each function
-        // before reducing all these results into one result.
-        const checks: PropertyType[] = propertyTypes[property]
-        return Promise.all(checks.map((check: PropertyType): Promise<Result> =>
-          Promise.resolve(check(this.properties[property], this, this.constructor.prototype))
-        )).then((results: Result[]) => results.reduce(reduceResults, { status: Status.SUCCESS }))
-      }
-
-      // If the property type is neither a function nor an array of functions, we return a failing status because you gave a bad property
-      // type.
-      return Promise.resolve({
-        status: Status.FAILURE,
-        error: 'One of the provided property types was not a function or array of functions.'
-      })
-    }))
-
-    log.debug(checkResults)
-
-    // We then reduce all the results into a single result object.
-    return checkResults.reduce(reduceResults, { status: Status.SUCCESS })
-  }
-
+  
   // Really simple way to generate an id for an object.
   // TODO: This should probably be tossed to a server.
   private async generateId(): Promise<string> {
